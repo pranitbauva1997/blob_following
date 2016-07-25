@@ -41,9 +41,11 @@ int connectArduino(const char *port) {
 
 int main(int argc, char **argv)
 {
-	if (argc != 2)
+	VideoCapture cap(1);
+	if (!cap.isOpened()) {
+		printf("ERROR!\n");
 		return -1;
-	VideoCapture cap(atoi(argv[0]));
+	}
 	namedWindow("Trackbars");
 	createTrackbar("h1", "Trackbars", &h1, 255);
 	createTrackbar("s2", "Trackbars", &s2, 255);
@@ -81,7 +83,7 @@ int main(int argc, char **argv)
 void thresh_callback(int a, void *b)
 {
 	Mat threshold_output;
-	vector<vector<Point> > contours, contours_poly(contours.size());
+	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	Point center_rect;
 	float area = INT_MAX;
@@ -94,13 +96,14 @@ void thresh_callback(int a, void *b)
 	findContours(threshold_output, contours, hierarchy, CV_RETR_TREE,
 				 CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-	vector<Vec4i> boundRect(contours.size());
 	/* Approximate contours to polygons + get bounding rects and circles */
+	vector<vector<Point> > contours_poly(contours.size());
+	vector<Rect> boundRect;
 	for (int i = 0; i < contours.size(); i++) {
 		if (contourArea(contours[i]) > 10000 &&
 			contourArea(contours[i]) < 50000) {
 				approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
-				boundRect[i] = (boundingRect(Mat(contours_poly[i])));
+				boundRect.push_back(boundingRect(Mat(contours_poly[i])));
 				area = contourArea(contours[i]);
 		}
 	}
