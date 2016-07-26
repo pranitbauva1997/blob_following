@@ -14,8 +14,8 @@ using namespace std;
 
 int fd;
 int color_threshold = 30, location_threshold = 40, angle_threshold = 2;
-int h1 = 0, s1 = 166, v1 = 59;
-int h2 = 16, s2 = 141, v2 = 255;
+int h1 = 0, s1 = 63, v1 = 52;
+int h2 = 196, s2 = 102, v2 = 189;
 
 Mat src, src_gray;
 int thresh = 100, max_thresh = 255;
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 	}
 	namedWindow("Trackbars");
 	createTrackbar("h1", "Trackbars", &h1, 255);
-	createTrackbar("s2", "Trackbars", &s2, 255);
+	createTrackbar("s1", "Trackbars", &s1, 255);
 	createTrackbar("v1", "Trackbars", &v1, 255);
 	createTrackbar("h2", "Trackbars", &h2, 255);
 	createTrackbar("s2", "Trackbars", &s2, 255);
@@ -95,12 +95,13 @@ void thresh_callback(int a, void *b)
 	/* Find contours */
 	findContours(threshold_output, contours, hierarchy, CV_RETR_TREE,
 				 CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+        //imshow("threshold_output", threshold_output);
 
 	/* Approximate contours to polygons + get bounding rects and circles */
 	vector<vector<Point> > contours_poly(contours.size());
 	vector<Rect> boundRect;
 	for (int i = 0; i < contours.size(); i++) {
-		if (contourArea(contours[i]) > 10000 &&
+		if (contourArea(contours[i]) > /* 10000 */ 4500 &&
 			contourArea(contours[i]) < 50000) {
 				approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
 				boundRect.push_back(boundingRect(Mat(contours_poly[i])));
@@ -119,7 +120,7 @@ void thresh_callback(int a, void *b)
 							  rng.uniform(0, 255));
 		rectangle(drawing, boundRect[i].tl(), boundRect[i].br(), color, 2,
 				  8, 0);
-		center_rect = (boundRect[i].tl() + boundRect[i].tl());
+		center_rect = (boundRect[i].tl() + boundRect[i].br());
 		center_rect.x /= 2;
 		center_rect.y /= 2;
 		circle(drawing, center_rect, 10, Scalar(255, 0, 0), CV_FILLED, 8, 0);
@@ -139,6 +140,7 @@ void thresh_callback(int a, void *b)
 	else {
 		if (area < 30000) {
 			cout << "Straight" << endl;
+                        printf("area = %f ", area);
 			sendCommand("w");
 		}
 		else {
