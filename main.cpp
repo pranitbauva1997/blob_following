@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include <string.h>
 
 using namespace cv;
 using namespace std;
@@ -16,6 +17,7 @@ int fd;
 int color_threshold = 30, location_threshold = 40, angle_threshold = 2;
 int h1 = 0, s1 = 63, v1 = 52;
 int h2 = 196, s2 = 102, v2 = 189;
+char serialPortFilename[] = "/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_55431313038351D0C0D1-if00";
 
 Mat src, src_gray;
 int thresh = 100, max_thresh = 255;
@@ -30,7 +32,11 @@ void thresh_callback(int, void *);
  * a := left
  */
 void sendCommand(const char *command) {
-	write(fd, command, 1);
+	char send=*command;
+	//write(fd, command, 1);
+	FILE *serport =fopen("/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_55431313038351D0C0D1-if00","w");
+	fprintf(serport,"%c",send);
+	fclose(serport);
 }
 
 int connectArduino(const char *port) {
@@ -110,7 +116,7 @@ void thresh_callback(int a, void *b)
 	}
 	if (boundRect.size() == 0) {
 		/* Send character 's' to device */
-		sendCommand("s");
+		sendCommand("S");
 	}
 
 	/* Draw polygon contour + bounding rects + circles */
@@ -131,20 +137,22 @@ void thresh_callback(int a, void *b)
 	obj_x = center_rect.x;
 	if (img_x - 100 > obj_x && 0 < obj_x) {
 		cout << "Go left" << endl;
-		sendCommand("a");
+		sendCommand("A");
 	}
 	else if (img_x + 100 < obj_x) {
 		cout << "Go right" << endl;
-		sendCommand("d");
+		sendCommand("D");
 	}
 	else {
-		if (area < 30000) {
+		if (area < 50000) {
 			cout << "Straight" << endl;
                         printf("area = %f ", area);
-			sendCommand("w");
+			sendCommand("W");
 		}
 		else {
-			sendCommand("s");
+			cout << "Stopping" << endl;
+			sendCommand("S");
+			return ;
 		}
 	}
 
